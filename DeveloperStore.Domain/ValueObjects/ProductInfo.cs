@@ -13,6 +13,15 @@ public sealed class ProductInfo : IEquatable<ProductInfo>
   public string Category { get; }
   public Money UnitPrice { get; }
 
+  // EF Core constructor
+  private ProductInfo()
+  {
+    ProductId = Guid.Empty;
+    Name = string.Empty;
+    Category = string.Empty;
+    UnitPrice = Money.Zero();
+  }
+
   private ProductInfo(Guid productId, string name, string category, Money unitPrice)
   {
     if (productId == Guid.Empty)

@@ -10,6 +10,14 @@ public sealed class CustomerInfo : IEquatable<CustomerInfo>
   public string Name { get; }
   public string Email { get; }
 
+  // EF Core constructor
+  private CustomerInfo()
+  {
+    CustomerId = Guid.Empty;
+    Name = string.Empty;
+    Email = string.Empty;
+  }
+
   private CustomerInfo(Guid customerId, string name, string email)
   {
     if (customerId == Guid.Empty)

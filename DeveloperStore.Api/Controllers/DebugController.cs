@@ -13,6 +13,43 @@ namespace DeveloperStore.Api.Controllers;
 public class DebugController : ControllerBase
 {
   /// <summary>
+  /// Test basic application health and show next steps
+  /// </summary>
+  [HttpGet("health")]
+  public IActionResult Health()
+  {
+    return Ok(new
+    {
+      Status = "Healthy",
+      DateTime = DateTime.UtcNow,
+      Message = "DeveloperStore API is running - Step 3 Complete!",
+      Step = "Step 3 - Persistence Layer with PostgreSQL",
+      Features = new[]
+      {
+        "✅ Entity Framework Core configured",
+        "✅ PostgreSQL provider setup",
+        "✅ Repository pattern implemented",
+        "✅ Value objects with EF Core mapping",
+        "✅ Database migrations ready",
+        "✅ Dependency injection configured"
+      },
+      NextEndpoints = new[]
+      {
+        "GET /api/sales - View all sales (empty at first)",
+        "POST /api/sales/test-create - Create a test sale",
+        "GET /api/sales/{id} - Get specific sale",
+        "GET /api/debug/create-sample-sale - Test domain rules"
+      },
+      DatabaseInfo = new
+      {
+        Provider = "PostgreSQL",
+        Status = "Migration created but not applied yet",
+        Note = "Run database migrations to create tables"
+      }
+    });
+  }
+
+  /// <summary>
   /// Create a sample sale for debugging purposes
   /// </summary>
   [HttpGet("create-sample-sale")]

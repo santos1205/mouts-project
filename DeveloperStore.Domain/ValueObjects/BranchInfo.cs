@@ -10,6 +10,14 @@ public sealed class BranchInfo : IEquatable<BranchInfo>
   public string Name { get; }
   public string Location { get; }
 
+  // EF Core constructor
+  private BranchInfo()
+  {
+    BranchId = Guid.Empty;
+    Name = string.Empty;
+    Location = string.Empty;
+  }
+
   private BranchInfo(Guid branchId, string name, string location)
   {
     if (branchId == Guid.Empty)

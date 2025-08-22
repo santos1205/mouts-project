@@ -9,6 +9,13 @@ public sealed class Money : IEquatable<Money>
   public decimal Amount { get; }
   public string Currency { get; }
 
+  // EF Core constructor
+  private Money()
+  {
+    Amount = 0;
+    Currency = "USD";
+  }
+
   private Money(decimal amount, string currency)
   {
     if (amount < 0)
