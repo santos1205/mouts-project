@@ -385,3 +385,6 @@ FodyWeavers.xsd
 *.user
 *.userosscache
 *.sln.docstates
+
+# Build documentation (project development log)
+build-documentation.md
