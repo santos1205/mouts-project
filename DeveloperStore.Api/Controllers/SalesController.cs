@@ -1,259 +1,150 @@
-using DeveloperStore.Domain.Entities;
-using DeveloperStore.Domain.Repositories;
-using DeveloperStore.Domain.ValueObjects;
+using DeveloperStore.Application.Common.DTOs;
+using DeveloperStore.Application.Sales.Commands.CreateSale;
+using DeveloperStore.Application.Sales.Queries.GetAllSales;
+using DeveloperStore.Application.Sales.Queries.GetSaleById;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeveloperStore.Api.Controllers;
 
 /// <summary>
-/// Sales API Controller for testing our persistence layer implementation.
-/// This is a basic CRUD controller for demonstration purposes.
-/// In Step 4, we'll replace this with proper CQRS implementation.
+/// Sales API Controller using CQRS pattern with MediatR.
+/// Implements proper separation of Commands and Queries for sales operations.
+/// Updated from test controller to production CQRS implementation.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class SalesController : ControllerBase
 {
-  private readonly ISaleRepository _saleRepository;
+  private readonly IMediator _mediator;
   private readonly ILogger<SalesController> _logger;
 
-  public SalesController(ISaleRepository saleRepository, ILogger<SalesController> logger)
+  public SalesController(IMediator mediator, ILogger<SalesController> logger)
   {
-    _saleRepository = saleRepository ?? throw new ArgumentNullException(nameof(saleRepository));
+    _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
 
   /// <summary>
-  /// Get all sales
+  /// Get all sales using CQRS query
   /// </summary>
+  /// <returns>List of sales with summary information</returns>
   [HttpGet]
-  public async Task<ActionResult<IEnumerable<object>>> GetSales()
+  [ProducesResponseType(typeof(List<GetAllSalesResponse>), StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+  public async Task<ActionResult<List<GetAllSalesResponse>>> GetSales()
   {
     try
     {
-      var sales = await _saleRepository.GetAllAsync();
+      _logger.LogInformation("Getting all sales");
 
-      var response = sales.Select(s => new
-      {
-        s.Id,
-        s.SaleNumber,
-        s.SaleDate,
-        Customer = new
-        {
-          s.Customer.CustomerId,
-          s.Customer.Name,
-          s.Customer.Email
-        },
-        Branch = new
-        {
-          s.Branch.BranchId,
-          s.Branch.Name,
-          s.Branch.Location
-        },
-        s.TotalQuantity,
-        Subtotal = new { s.Subtotal.Amount, s.Subtotal.Currency },
-        TotalDiscount = new { s.TotalDiscount.Amount, s.TotalDiscount.Currency },
-        TotalAmount = new { s.TotalAmount.Amount, s.TotalAmount.Currency },
-        s.IsCancelled,
-        s.CancellationReason,
-        ItemCount = s.Items.Count(),
-        s.CreatedAt
-      });
+      var query = new GetAllSalesQuery();
+      var result = await _mediator.Send(query);
 
-      return Ok(response);
+      _logger.LogInformation("Retrieved {Count} sales", result.Count);
+      return Ok(result);
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error retrieving sales");
-      return StatusCode(500, "An error occurred while retrieving sales");
+      return StatusCode(StatusCodes.Status500InternalServerError,
+        "An error occurred while retrieving sales");
     }
   }
 
   /// <summary>
-  /// Get sale by ID
+  /// Get sale by ID using CQRS query
   /// </summary>
+  /// <param name="id">Sale identifier</param>
+  /// <returns>Complete sale information including items</returns>
   [HttpGet("{id:guid}")]
-  public async Task<ActionResult<object>> GetSale(Guid id)
+  [ProducesResponseType(typeof(GetSaleByIdResponse), StatusCodes.Status200OK)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+  public async Task<ActionResult<GetSaleByIdResponse>> GetSale(Guid id)
   {
     try
     {
-      var sale = await _saleRepository.GetByIdAsync(id);
-      if (sale == null)
+      _logger.LogInformation("Getting sale {SaleId}", id);
+
+      var query = new GetSaleByIdQuery(id);
+      var result = await _mediator.Send(query);
+
+      if (result == null)
       {
+        _logger.LogWarning("Sale {SaleId} not found", id);
         return NotFound($"Sale with ID {id} not found");
       }
 
-      var response = new
-      {
-        sale.Id,
-        sale.SaleNumber,
-        sale.SaleDate,
-        Customer = new
-        {
-          sale.Customer.CustomerId,
-          sale.Customer.Name,
-          sale.Customer.Email
-        },
-        Branch = new
-        {
-          sale.Branch.BranchId,
-          sale.Branch.Name,
-          sale.Branch.Location
-        },
-        Items = sale.Items.Select(item => new
-        {
-          item.Id,
-          Product = new
-          {
-            item.Product.ProductId,
-            item.Product.Name,
-            item.Product.Category,
-            UnitPrice = new { item.Product.UnitPrice.Amount, item.Product.UnitPrice.Currency }
-          },
-          item.Quantity,
-          UnitPrice = new { item.UnitPrice.Amount, item.UnitPrice.Currency },
-          Discount = new { item.Discount.Amount, item.Discount.Currency },
-          LineTotal = new { item.LineTotal.Amount, item.LineTotal.Currency },
-          item.CreatedAt
-        }),
-        sale.TotalQuantity,
-        Subtotal = new { sale.Subtotal.Amount, sale.Subtotal.Currency },
-        SaleLevelDiscount = new { sale.SaleLevelDiscount.Amount, sale.SaleLevelDiscount.Currency },
-        TotalDiscount = new { sale.TotalDiscount.Amount, sale.TotalDiscount.Currency },
-        TotalAmount = new { sale.TotalAmount.Amount, sale.TotalAmount.Currency },
-        sale.IsCancelled,
-        sale.CancellationReason,
-        sale.CreatedAt
-      };
-
-      return Ok(response);
+      _logger.LogInformation("Retrieved sale {SaleId} with {ItemCount} items", id, result.Items.Count);
+      return Ok(result);
     }
     catch (Exception ex)
     {
       _logger.LogError(ex, "Error retrieving sale {SaleId}", id);
-      return StatusCode(500, "An error occurred while retrieving the sale");
+      return StatusCode(StatusCodes.Status500InternalServerError,
+        "An error occurred while retrieving the sale");
     }
   }
 
   /// <summary>
-  /// Create a new sale for testing
+  /// Create a new sale using CQRS command
   /// </summary>
-  [HttpPost("test-create")]
-  public async Task<ActionResult<object>> CreateTestSale()
+  /// <param name="request">Sale creation request</param>
+  /// <returns>Created sale information</returns>
+  [HttpPost]
+  [ProducesResponseType(typeof(SaleDto), StatusCodes.Status201Created)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+  public async Task<ActionResult<SaleDto>> CreateSale([FromBody] CreateSaleRequest request)
   {
     try
     {
-      // Create test data
-      var customer = CustomerInfo.Of(
-          customerId: Guid.NewGuid(),
-          name: "John Doe",
-          email: "john.doe@email.com"
-      );
+      _logger.LogInformation("Creating sale for customer {CustomerId}", request.CustomerId);
 
-      var branch = BranchInfo.Of(
-          branchId: Guid.NewGuid(),
-          name: "Main Branch",
-          location: "Downtown"
-      );
-
-      // Create sale
-      var sale = Sale.Create(
-          saleNumber: $"SALE-{DateTime.UtcNow:yyyyMMdd-HHmmss}",
-          saleDate: DateTime.UtcNow,
-          customer: customer,
-          branch: branch
-      );
-
-      // Add some test items
-      var product1 = ProductInfo.Of(
-          productId: Guid.NewGuid(),
-          name: "Laptop Pro X1",
-          category: "Electronics",
-          unitPrice: Money.Of(2500m, "BRL")
-      );
-
-      var product2 = ProductInfo.Of(
-          productId: Guid.NewGuid(),
-          name: "Wireless Mouse",
-          category: "Accessories",
-          unitPrice: Money.Of(150m, "BRL")
-      );
-
-      sale.AddItem(product1, 2, Money.Of(2400m, "BRL")); // Discounted price
-      sale.AddItem(product2, 3, Money.Of(140m, "BRL"));  // Discounted price
-
-      // Save to database
-      await _saleRepository.AddAsync(sale);
-      await _saleRepository.SaveChangesAsync();
-
-      _logger.LogInformation("Created test sale {SaleNumber} with ID {SaleId}", sale.SaleNumber, sale.Id);
-
-      // Return created sale
-      return CreatedAtAction(
-          nameof(GetSale),
-          new { id = sale.Id },
-          new
-          {
-            sale.Id,
-            sale.SaleNumber,
-            Message = "Test sale created successfully",
-            ItemsCount = sale.Items.Count,
-            TotalAmount = new { sale.TotalAmount.Amount, sale.TotalAmount.Currency }
-          }
-      );
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error creating test sale");
-      return StatusCode(500, "An error occurred while creating the test sale");
-    }
-  }
-
-  /// <summary>
-  /// Get sales by customer ID
-  /// </summary>
-  [HttpGet("customer/{customerId:guid}")]
-  public async Task<ActionResult<IEnumerable<object>>> GetSalesByCustomer(Guid customerId)
-  {
-    try
-    {
-      var sales = await _saleRepository.GetByCustomerIdAsync(customerId);
-
-      var response = sales.Select(s => new
+      var command = new CreateSaleCommand
       {
-        s.Id,
-        s.SaleNumber,
-        s.SaleDate,
-        s.TotalQuantity,
-        TotalAmount = new { s.TotalAmount.Amount, s.TotalAmount.Currency },
-        s.IsCancelled,
-        ItemCount = s.Items.Count()
-      });
+        CustomerId = request.CustomerId,
+        CustomerName = request.CustomerName,
+        CustomerEmail = request.CustomerEmail,
+        BranchId = request.BranchId,
+        BranchName = request.BranchName,
+        BranchLocation = request.BranchLocation,
+        Items = request.Items.Select(item => new CreateSaleItemDto
+        {
+          ProductId = item.ProductId,
+          ProductName = item.ProductName,
+          ProductCategory = item.ProductCategory,
+          ProductUnitPrice = item.ProductUnitPrice,
+          ProductUnitPriceCurrency = item.ProductUnitPriceCurrency,
+          Quantity = item.Quantity,
+          UnitPrice = item.UnitPrice,
+          UnitPriceCurrency = item.UnitPriceCurrency
+        }).ToList()
+      };
 
-      return Ok(response);
+      var result = await _mediator.Send(command);
+
+      _logger.LogInformation("Created sale {SaleNumber} with ID {SaleId}",
+        result.SaleNumber, result.Id);
+
+      return CreatedAtAction(
+        nameof(GetSale),
+        new { id = result.Id },
+        result
+      );
     }
     catch (Exception ex)
     {
-      _logger.LogError(ex, "Error retrieving sales for customer {CustomerId}", customerId);
-      return StatusCode(500, "An error occurred while retrieving customer sales");
+      _logger.LogError(ex, "Error creating sale");
+      return StatusCode(StatusCodes.Status500InternalServerError,
+        "An error occurred while creating the sale");
     }
   }
 
-  /// <summary>
-  /// Check if sale number exists
-  /// </summary>
-  [HttpGet("exists/{saleNumber}")]
-  public async Task<ActionResult<object>> CheckSaleNumberExists(string saleNumber)
-  {
-    try
-    {
-      var exists = await _saleRepository.SaleNumberExistsAsync(saleNumber);
-      return Ok(new { saleNumber, exists });
-    }
-    catch (Exception ex)
-    {
-      _logger.LogError(ex, "Error checking sale number existence for {SaleNumber}", saleNumber);
-      return StatusCode(500, "An error occurred while checking sale number");
-    }
-  }
+  // TODO: Add additional endpoints as needed:
+  // - Update Sale (PUT /api/sales/{id})
+  // - Cancel Sale (DELETE /api/sales/{id} or PATCH /api/sales/{id}/cancel)
+  // - Get Sales by Customer (GET /api/sales/customer/{customerId})
+  // - Advanced filtering and pagination
 }
