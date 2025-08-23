@@ -1,4 +1,5 @@
 using DeveloperStore.Api.Middleware;
+using DeveloperStore.Application;
 using DeveloperStore.Infrastructure;
 using Microsoft.AspNetCore.HttpLogging;
 using Serilog;
@@ -53,6 +54,9 @@ else
 {
     builder.Services.AddInfrastructure(builder.Configuration);
 }
+
+// Application services (MediatR, validators, etc.)
+builder.Services.AddApplication();
 
 // Add CORS for development and testing
 if (builder.Environment.IsDevelopment() || builder.Environment.IsEnvironment("Testing"))
