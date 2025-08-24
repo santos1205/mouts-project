@@ -95,20 +95,21 @@ public class SaleMappingProfile : Profile
             .ForMember(dest => dest.CancellationReason, opt => opt.MapFrom(src => src.CancellationReason))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
 
-        // Sale entity to GetAllSalesResponse
+        // Sale entity to GetAllSalesResponse (summary view without items)
         CreateMap<Sale, GetAllSalesResponse>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
             .ForMember(dest => dest.SaleNumber, opt => opt.MapFrom(src => src.SaleNumber))
             .ForMember(dest => dest.SaleDate, opt => opt.MapFrom(src => src.SaleDate))
             .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => src.Customer))
             .ForMember(dest => dest.Branch, opt => opt.MapFrom(src => src.Branch))
-            .ForMember(dest => dest.TotalQuantity, opt => opt.MapFrom(src => src.TotalQuantity))
-            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => src.Subtotal))
-            .ForMember(dest => dest.TotalDiscount, opt => opt.MapFrom(src => src.TotalDiscount))
-            .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount))
             .ForMember(dest => dest.IsCancelled, opt => opt.MapFrom(src => src.IsCancelled))
             .ForMember(dest => dest.CancellationReason, opt => opt.MapFrom(src => src.CancellationReason))
-            .ForMember(dest => dest.ItemCount, opt => opt.MapFrom(src => src.Items.Count))
-            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt));
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+            // For summary view, set calculated values to default/zero since items aren't loaded
+            .ForMember(dest => dest.TotalQuantity, opt => opt.MapFrom(src => 0))
+            .ForMember(dest => dest.Subtotal, opt => opt.MapFrom(src => Money.Zero("USD")))
+            .ForMember(dest => dest.TotalDiscount, opt => opt.MapFrom(src => Money.Zero("USD")))
+            .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => Money.Zero("USD")))
+            .ForMember(dest => dest.ItemCount, opt => opt.MapFrom(src => 0));
     }
 }

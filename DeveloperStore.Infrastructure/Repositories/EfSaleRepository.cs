@@ -19,6 +19,7 @@ public class EfSaleRepository : ISaleRepository
 
   public async Task<Sale?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
   {
+    // For GetById, we need to load items using navigation property
     return await _context.Sales
         .Include(s => s.Items)
         .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
