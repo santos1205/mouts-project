@@ -1,3 +1,4 @@
+using DeveloperStore.Api.Models.Requests;
 using DeveloperStore.Application.Common.DTOs;
 using DeveloperStore.Application.Sales.Commands.CancelSale;
 using DeveloperStore.Application.Sales.Commands.CreateSale;

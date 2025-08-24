@@ -389,3 +389,10 @@ FodyWeavers.xsd
 # Build documentation (project development log)
 build-documentation.md
 test-commands-reference.md
+
+# SQLite database files
+*.db-shm
+*.db-wal
+
+# SQLite database (keep main db file commented if you want to exclude it too)
+# *.db

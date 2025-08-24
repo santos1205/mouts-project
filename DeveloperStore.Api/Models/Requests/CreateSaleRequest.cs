@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace DeveloperStore.Api.Controllers;
+namespace DeveloperStore.Api.Models.Requests;
 
 /// <summary>
 /// Request model for creating a new sale via API
