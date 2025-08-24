@@ -45,11 +45,12 @@ A **DeveloperStore Sales API** é uma API CRUD completa para gerenciar registros
 - **Funcionalidade Principal**: Criar, Ler, Atualizar, Deletar registros de vendas
 - **Pontos de Dados**: Número da Venda, Data, Cliente, Filial, Produtos, Quantidades, Preços, Descontos, Totais, Status de Cancelamento
 - **Regras de Negócio**:
-  - Níveis de desconto baseados na quantidade de itens:
-    - < 4 itens: 0% de desconto
-    - 4-9 itens: 10% de desconto
-    - 10-20 itens: 20% de desconto
+  - Níveis de desconto baseados na quantidade **por produto**:
+    - < 4 itens do produto: 0% de desconto
+    - 4-9 itens do produto: 10% de desconto
+    - 10-20 itens do produto: 20% de desconto
   - Máximo de 20 itens por produto
+  - Cada produto na venda tem seu desconto calculado individualmente
 - **Eventos de Domínio**: VendaCriada, VendaModificada, VendaCancelada
 
 ## Arquitetura
