@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DeveloperStore.Api.Controllers;
+using DeveloperStore.Api.Models.Requests;
 using DeveloperStore.Application.Common.DTOs;
 using DeveloperStore.Application.Sales.Queries.GetAllSales;
 using DeveloperStore.Application.Sales.Queries.GetSaleById;

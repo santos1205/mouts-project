@@ -3,30 +3,21 @@
 
 > **Nota**: Este arquivo rastreia o processo completo de desenvolvimento. Serve como um log detalhado de desenvolvimento e documentação técnica.
 
-## ⚡ Configuração Rápida - PostgreSQL Local
+## ⚡ Configuração Rápida - SQLite Local
 
-**🚨 IMPORTANTE**: Para executar a API localmente, você precisa configurar um banco PostgreSQL. Os testes de integração funcionam (usam SQLite), mas a API de desenvolvimento requer PostgreSQL.
+**✅ SIMPLICIDADE**: O projeto usa SQLite como banco de dados, eliminando a necessidade de configuração externa. Tudo funciona "out-of-the-box"!
 
-### 🐳 Configuração Rápida com Docker (Recomendado)
+### � Configuração Rápida (3 passos)
 ```bash
-# 1. Iniciar PostgreSQL no Docker
-docker run --name developerstore-postgres \
-  -e POSTGRES_DB=DeveloperStore_Dev \
-  -e POSTGRES_USER=devstore_user \
-  -e POSTGRES_PASSWORD=devstore_pass \
-  -p 5432:5432 \
-  -d postgres:15
-
-# 2. Aplicar migrações EF Core
+# 1. Aplicar migrações EF Core (cria o banco SQLite automaticamente)
 dotnet ef database update --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
 
-# 3. Executar a API
+# 2. Executar a API
 dotnet run --project DeveloperStore.Api
-```
 
-### 📖 Guia Completo de Configuração
-Para instruções detalhadas, problemas comuns e alternativas, consulte:
-**→ [POSTGRESQL-DEV-SETUP.md](POSTGRESQL-DEV-SETUP.md)** (Guia completo de configuração PostgreSQL)
+# 3. Executar testes
+dotnet test
+```
 
 ### ✅ Verificação de Funcionamento
 Após configuração:
@@ -228,7 +219,7 @@ public void Venda_Deve_CalcularDesconto_ComBase_NosNiveisDeQuantidade()
 #### 🔗 Testes de Integração
 **Propósito**: Testar interações de componentes com dependências reais.
 - **Framework**: Microsoft.AspNetCore.Mvc.Testing (WebApplicationFactory).
-- **Banco de Dados**: Testcontainers com instâncias reais do PostgreSQL.
+- **Banco de Dados**: SQLite em memória para isolamento completo dos testes.
 - **Testes HTTP**: Servidor de teste em memória com pipeline completo.
 - **Velocidade**: Segundos por teste.
 - **Cobertura**: Endpoints da API, Operações de banco de dados, Fluxos completos.
@@ -300,7 +291,7 @@ public void Dominio_NaoDeve_Depender_DaInfraestrutura()
 ```
 🔗 Objetivos de Teste do Passo 5:
 ✅ Teste completo do ciclo de requisição/resposta HTTP
-✅ Integração de banco de dados com PostgreSQL real
+✅ Integração de banco de dados com SQLite
 ✅ Verificação do pipeline de validação
 ✅ Tratamento de erros e casos extremos
 ```
@@ -480,7 +471,8 @@ Todos os testes servem como **documentação viva** do comportamento do sistema:
 - **Padrão Repository**: Abstração de acesso a dados.
 
 ### Dados e Persistência
-- **Entity Framework Core**: ORM com provedor In-Memory para desenvolvimento.
+- **Entity Framework Core**: ORM com provedor SQLite para desenvolvimento e produção.
+- **SQLite**: Banco de dados leve e portável, sem dependências externas.
 - **AutoMapper**: Mapeamento objeto-para-objeto.
 
 ### Mensageria e Eventos
@@ -861,13 +853,13 @@ Esta seção rastreia todas as mudanças e progressos feitos durante o desenvolv
 
 #### ✅ Tarefas Completadas
 
-**1. Configuração do Entity Framework Core com PostgreSQL**
+**1. Configuração do Entity Framework Core com SQLite**
 - Adicionados pacotes NuGet:
   - `Microsoft.EntityFrameworkCore` - Funcionalidade principal do EF.
-  - `Npgsql.EntityFrameworkCore.PostgreSQL` - Provedor para PostgreSQL.
+  - `Microsoft.EntityFrameworkCore.Sqlite` - Provedor para SQLite.
   - `Microsoft.EntityFrameworkCore.Design` - Ferramentas de migração.
-- Configuradas connection strings do PostgreSQL em `appsettings.json` e `appsettings.Development.json`.
-- Configurados bancos de dados separados para ambientes de produção e desenvolvimento.
+- Configuradas connection strings do SQLite em `appsettings.json` e `appsettings.Development.json`.
+- SQLite oferece simplicidade de configuração sem dependências externas.
 
 **2. DbContext e Configurações de Entidade**
 - Criado `DeveloperStoreDbContext` com configurações adequadas de DbSet.
@@ -898,10 +890,10 @@ Esta seção rastreia todas as mudanças e progressos feitos durante o desenvolv
 
 **5. Configuração da Injeção de Dependência**
 - Criados métodos de extensão `DependencyInjection` na camada de Infraestrutura.
-- Configurado o PostgreSQL com políticas de nova tentativa de conexão e pooling de conexões.
+- Configurado o SQLite com otimizações adequadas para desenvolvimento e produção.
 - Adicionadas configurações específicas de desenvolvimento com logging e depuração aprimorados.
 - Registradas as implementações de repositório com escopo adequado.
-- Separadas as configurações de produção e desenvolvimento.
+- Configuração simplificada comparada a bancos de dados tradicionais.
 
 **6. Sistema de Migração de Banco de Dados**
 - Criada com sucesso a migração inicial com as ferramentas CLI do EF Core.
@@ -910,7 +902,7 @@ Esta seção rastreia todas as mudanças e progressos feitos durante o desenvolv
   - Tabela `SaleItems` com informações de Produto e detalhes de preços.
   - Restrições de chave estrangeira e índices adequados.
   - Suporte para objetos de valor complexos (Money, CustomerInfo, BranchInfo, ProductInfo).
-- A migração inclui tipos de dados e restrições apropriados do PostgreSQL.
+- A migração inclui tipos de dados e restrições apropriados do SQLite.
 
 **7. Integração e Testes da API**
 - Atualizado `Program.cs` para registrar os serviços de Infraestrutura com base no ambiente.
@@ -923,10 +915,10 @@ Esta seção rastreia todas as mudanças e progressos feitos durante o desenvolv
 
 #### 🔧 Decisões Técnicas Tomadas
 
-**PostgreSQL em vez de Banco de Dados em Memória**:
-- **Justificativa**: Solicitado pelo usuário para uma implementação pronta para produção.
-- **Benefícios**: Restrições reais do banco de dados, testes de performance, semelhança com a produção.
-- **Configuração**: Bancos de dados de dev/prod separados, pooling de conexões, políticas de nova tentativa.
+**SQLite para Simplicidade e Portabilidade**:
+- **Justificativa**: Elimina dependências externas e complexidade de configuração.
+- **Benefícios**: Setup imediato, portabilidade, testes mais rápidos, ideal para desenvolvimento.
+- **Configuração**: Arquivo de banco único, sem necessidade de serviços externos.
 
 **Padrão Repository na Camada de Domínio**:
 - **Justificativa**: Segue o princípio de inversão de dependência do DDD.
@@ -966,7 +958,7 @@ Esta seção rastreia todas as mudanças e progressos feitos durante o desenvolv
 - `DeveloperStore.Api/Controllers/SalesController.cs` - Controller CRUD abrangente
 - `DeveloperStore.Api/Controllers/DebugController.cs` - Aprimorado com o status do Passo 3
 - `DeveloperStore.Api/Program.cs` - Registro de serviços da infraestrutura
-- `DeveloperStore.Api/appsettings.json` - Configuração de conexão do PostgreSQL
+- `DeveloperStore.Api/appsettings.json` - Configuração de conexão do SQLite
 - `DeveloperStore.Api/appsettings.Development.json` - Configuração do banco de dados de desenvolvimento
 
 #### 🗄️ Esquema de Banco de Dados Gerado
@@ -1038,8 +1030,8 @@ CREATE TABLE "SaleItems" (
 - ✅ **API**: API aprimorada com endpoints de persistência.
 - ✅ **Documentação**: Atualizada com a conclusão do Passo 3.
 - ✅ **Modelo de Domínio**: Modelo de domínio rico e completo com regras de negócio.
-- ✅ **Camada de Persistência**: Implementação completa do PostgreSQL com EF Core.
-- ⏳ **Migração de Banco de Dados**: Criada, mas ainda não aplicada à instância do PostgreSQL.
+- ✅ **Camada de Persistência**: Implementação completa do SQLite com EF Core.
+- ⏳ **Migração de Banco de Dados**: Migração criada para SQLite.
 - ⏳ **Camada de Aplicação**: Implementação do CQRS necessária (Próximo passo).
 - ⏳ **Recursos de Produção**: Validação, middleware de tratamento de erros necessários.
 
@@ -1276,7 +1268,7 @@ CREATE TABLE "SaleItems" (
 - ✅ **API**: API aprimorada pronta para integração com o controller CQRS.
 - ✅ **Documentação**: Atualizada com detalhes abrangentes da implementação do Passo 4.
 - ✅ **Modelo de Domínio**: Modelo de domínio rico com regras de negócio e validação completas.
-- ✅ **Camada de Persistência**: Implementação completa do PostgreSQL com integração EF Core.
+- ✅ **Camada de Persistência**: Implementação completa do SQLite com integração EF Core.
 - ✅ **Camada de Aplicação**: Implementação completa de CQRS com MediatR, validação e mapeamento.
 - ✅ **Infraestrutura de Testes**: Suíte de testes abrangente com 25 testes passando usando a abordagem TDD.
 - ⏳ **Implementação de Queries**: Queries CQRS ainda não implementadas (Próxima prioridade).
@@ -1468,7 +1460,7 @@ CREATE TABLE "SaleItems" (
 - ✅ **API**: API CQRS pronta para produção com tratamento de erros e logging adequados.
 - ✅ **Documentação**: Atualizada com detalhes abrangentes da implementação do Passo 5.
 - ✅ **Modelo de Domínio**: Modelo de domínio rico com regras de negócio e validação completas.
-- ✅ **Camada de Persistência**: Implementação completa do PostgreSQL com integração EF Core.
+- ✅ **Camada de Persistência**: Implementação completa do SQLite com integração EF Core.
 - ✅ **Camada de Aplicação**: Implementação completa de CQRS com comandos e queries.
 - ✅ **Implementação de Queries**: Implementação completa do lado de leitura com DTOs otimizados.
 - ✅ **Integração da API**: Controller de produção usando MediatR para todas as operações.
@@ -1511,10 +1503,10 @@ CREATE TABLE "SaleItems" (
 - Construtores sem parâmetros são necessários, mas podem ser privados.
 - Objetos de valor complexos (como `ProductInfo` com `Money` aninhado) requerem configuração cuidadosa.
 
-**Integração com PostgreSQL**:
-- Políticas de nova tentativa de conexão são essenciais para implantações em nuvem.
-- Configurações de desenvolvimento/produção separadas melhoram a experiência do desenvolvedor.
-- Uma estratégia de indexação adequada melhora o desempenho das consultas.
+**Integração com SQLite**:
+- Configuração simplificada elimina complexidade de setup.
+- Arquivo único de banco de dados facilita backup e distribuição.
+- Excelente performance para desenvolvimento e aplicações de pequeno a médio porte.
 
 **Domain-Driven Design com ORM**:
 - Modelos de domínio ricos podem coexistir com o mapeamento relacional.
@@ -1564,7 +1556,7 @@ CREATE TABLE "SaleItems" (
 **✅ Arquitetura de Testes de Integração**:
 - **DeveloperStoreWebApplicationFactory**: Factory customizada para testes.
   - Configuração de ambiente "Testing" isolado.
-  - Substituição do PostgreSQL por um banco de dados InMemory.
+  - Banco SQLite em memória para isolamento completo dos testes.
   - Seeding automático de dados de teste.
   - Limpeza entre testes para isolamento.
 
