@@ -3,6 +3,39 @@
 
 > **Nota**: Este arquivo rastreia o processo completo de desenvolvimento. Serve como um log detalhado de desenvolvimento e documentação técnica.
 
+## ⚡ Configuração Rápida - PostgreSQL Local
+
+**🚨 IMPORTANTE**: Para executar a API localmente, você precisa configurar um banco PostgreSQL. Os testes de integração funcionam (usam SQLite), mas a API de desenvolvimento requer PostgreSQL.
+
+### 🐳 Configuração Rápida com Docker (Recomendado)
+```bash
+# 1. Iniciar PostgreSQL no Docker
+docker run --name developerstore-postgres \
+  -e POSTGRES_DB=DeveloperStore_Dev \
+  -e POSTGRES_USER=devstore_user \
+  -e POSTGRES_PASSWORD=devstore_pass \
+  -p 5432:5432 \
+  -d postgres:15
+
+# 2. Aplicar migrações EF Core
+dotnet ef database update --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+
+# 3. Executar a API
+dotnet run --project DeveloperStore.Api
+```
+
+### 📖 Guia Completo de Configuração
+Para instruções detalhadas, problemas comuns e alternativas, consulte:
+**→ [POSTGRESQL-DEV-SETUP.md](POSTGRESQL-DEV-SETUP.md)** (Guia completo de configuração PostgreSQL)
+
+### ✅ Verificação de Funcionamento
+Após configuração:
+- API: `http://localhost:5079`
+- Swagger: `http://localhost:5079/swagger`
+- Endpoint de teste: `http://localhost:5079/api/Sales`
+
+---
+
 ## Índice
 - [Visão Geral](#visão-geral)
 - [Arquitetura](#arquitetura)
