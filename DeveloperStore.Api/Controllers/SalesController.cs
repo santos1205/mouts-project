@@ -1,5 +1,6 @@
 using DeveloperStore.Application.Common.DTOs;
 using DeveloperStore.Application.Sales.Commands.CreateSale;
+using DeveloperStore.Application.Sales.Commands.CancelSale;
 using DeveloperStore.Application.Sales.Queries.GetAllSales;
 using DeveloperStore.Application.Sales.Queries.GetSaleById;
 using MediatR;
@@ -142,9 +143,49 @@ public class SalesController : ControllerBase
     }
   }
 
+  /// <summary>
+  /// Cancel a sale by its ID
+  /// </summary>
+  /// <param name="id">The ID of the sale to cancel</param>
+  /// <returns>204 No Content if successful</returns>
+  [HttpDelete("{id:guid}")]
+  [ProducesResponseType(StatusCodes.Status204NoContent)]
+  [ProducesResponseType(StatusCodes.Status404NotFound)]
+  [ProducesResponseType(StatusCodes.Status400BadRequest)]
+  [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+  public async Task<IActionResult> CancelSale(Guid id)
+  {
+    try
+    {
+      _logger.LogInformation("Cancelling sale {SaleId}", id);
+
+      var command = new CancelSaleCommand(id, "Sale cancelled via API");
+      var result = await _mediator.Send(command);
+
+      if (!result)
+      {
+        _logger.LogWarning("Sale {SaleId} not found or already cancelled", id);
+        return NotFound($"Sale with ID {id} not found or already cancelled");
+      }
+
+      _logger.LogInformation("Sale {SaleId} cancelled successfully", id);
+      return NoContent();
+    }
+    catch (InvalidOperationException ex)
+    {
+      _logger.LogWarning(ex, "Invalid operation when cancelling sale {SaleId}", id);
+      return BadRequest(ex.Message);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "Error cancelling sale {SaleId}", id);
+      return StatusCode(StatusCodes.Status500InternalServerError,
+        "An error occurred while cancelling the sale");
+    }
+  }
+
   // TODO: Add additional endpoints as needed:
   // - Update Sale (PUT /api/sales/{id})
-  // - Cancel Sale (DELETE /api/sales/{id} or PATCH /api/sales/{id}/cancel)
   // - Get Sales by Customer (GET /api/sales/customer/{customerId})
   // - Advanced filtering and pagination
 }
