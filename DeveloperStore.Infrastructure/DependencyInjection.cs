@@ -1,6 +1,6 @@
 using DeveloperStore.Domain.Repositories;
 using DeveloperStore.Infrastructure.Persistence;
-using DeveloperStore.Infrastructure.Persistence.Repositories;
+using DeveloperStore.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,18 +18,14 @@ public static class DependencyInjection
       this IServiceCollection services,
       IConfiguration configuration)
   {
-    // PostgreSQL Database Context
+    // SQLite Database Context
     services.AddDbContext<DeveloperStoreDbContext>(options =>
     {
       var connectionString = configuration.GetConnectionString("DefaultConnection");
-      options.UseNpgsql(connectionString, npgsqlOptions =>
+      options.UseSqlite(connectionString, sqliteOptions =>
           {
-          npgsqlOptions.MigrationsAssembly(typeof(DeveloperStoreDbContext).Assembly.FullName);
-          npgsqlOptions.EnableRetryOnFailure(
-                  maxRetryCount: 3,
-                  maxRetryDelay: TimeSpan.FromSeconds(5),
-                  errorCodesToAdd: null);
-        });
+            sqliteOptions.MigrationsAssembly(typeof(DeveloperStoreDbContext).Assembly.FullName);
+          });
 
       // Enable sensitive data logging in development
       options.EnableSensitiveDataLogging(false); // Set to true only in development
@@ -37,7 +33,7 @@ public static class DependencyInjection
     });
 
     // Repositories
-    services.AddScoped<ISaleRepository, SaleRepository>();
+    services.AddScoped<ISaleRepository, EfSaleRepository>();
 
     return services;
   }
@@ -56,14 +52,10 @@ public static class DependencyInjection
     services.AddDbContext<DeveloperStoreDbContext>(options =>
     {
       var connectionString = configuration.GetConnectionString("DefaultConnection");
-      options.UseNpgsql(connectionString, npgsqlOptions =>
+      options.UseSqlite(connectionString, sqliteOptions =>
           {
-          npgsqlOptions.MigrationsAssembly(typeof(DeveloperStoreDbContext).Assembly.FullName);
-          npgsqlOptions.EnableRetryOnFailure(
-                  maxRetryCount: 3,
-                  maxRetryDelay: TimeSpan.FromSeconds(5),
-                  errorCodesToAdd: null);
-        });
+            sqliteOptions.MigrationsAssembly(typeof(DeveloperStoreDbContext).Assembly.FullName);
+          });
 
       // Development-specific options
       options.EnableSensitiveDataLogging(true);

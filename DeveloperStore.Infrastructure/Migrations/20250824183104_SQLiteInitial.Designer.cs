@@ -5,53 +5,48 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
 namespace DeveloperStore.Infrastructure.Migrations
 {
     [DbContext(typeof(DeveloperStoreDbContext))]
-    [Migration("20250822235214_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20250824183104_SQLiteInitial")]
+    partial class SQLiteInitial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
-
-            NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
 
             modelBuilder.Entity("DeveloperStore.Domain.Entities.Sale", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("CancellationReason")
                         .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsCancelled")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
+                        .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
                     b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("SaleDate")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("SaleNumber")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -65,19 +60,19 @@ namespace DeveloperStore.Infrastructure.Migrations
             modelBuilder.Entity("DeveloperStore.Domain.Entities.SaleItem", b =>
                 {
                     b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Quantity")
-                        .HasColumnType("integer");
+                        .HasColumnType("INTEGER");
 
                     b.Property<Guid>("SaleId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -92,7 +87,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.Money", "SaleLevelDiscount", b1 =>
                         {
                             b1.Property<Guid>("SaleId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<decimal>("Amount")
                                 .HasColumnType("decimal(18,2)")
@@ -102,7 +97,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                                 .IsRequired()
                                 .ValueGeneratedOnAdd()
                                 .HasMaxLength(3)
-                                .HasColumnType("character varying(3)")
+                                .HasColumnType("TEXT")
                                 .HasDefaultValue("BRL")
                                 .HasColumnName("SaleLevelDiscountCurrency");
 
@@ -117,22 +112,22 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.BranchInfo", "Branch", b1 =>
                         {
                             b1.Property<Guid>("SaleId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<Guid>("BranchId")
-                                .HasColumnType("uuid")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("BranchId");
 
                             b1.Property<string>("Location")
                                 .IsRequired()
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("BranchLocation");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("BranchName");
 
                             b1.HasKey("SaleId");
@@ -146,22 +141,22 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.CustomerInfo", "Customer", b1 =>
                         {
                             b1.Property<Guid>("SaleId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<Guid>("CustomerId")
-                                .HasColumnType("uuid")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("CustomerId");
 
                             b1.Property<string>("Email")
                                 .IsRequired()
                                 .HasMaxLength(250)
-                                .HasColumnType("character varying(250)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("CustomerEmail");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("CustomerName");
 
                             b1.HasKey("SaleId");
@@ -193,7 +188,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.Money", "Discount", b1 =>
                         {
                             b1.Property<Guid>("SaleItemId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<decimal>("Amount")
                                 .HasColumnType("decimal(18,2)")
@@ -203,7 +198,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                                 .IsRequired()
                                 .ValueGeneratedOnAdd()
                                 .HasMaxLength(3)
-                                .HasColumnType("character varying(3)")
+                                .HasColumnType("TEXT")
                                 .HasDefaultValue("BRL")
                                 .HasColumnName("DiscountCurrency");
 
@@ -218,7 +213,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.Money", "UnitPrice", b1 =>
                         {
                             b1.Property<Guid>("SaleItemId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<decimal>("Amount")
                                 .HasColumnType("decimal(18,2)")
@@ -228,7 +223,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                                 .IsRequired()
                                 .ValueGeneratedOnAdd()
                                 .HasMaxLength(3)
-                                .HasColumnType("character varying(3)")
+                                .HasColumnType("TEXT")
                                 .HasDefaultValue("BRL")
                                 .HasColumnName("UnitPriceCurrency");
 
@@ -243,22 +238,22 @@ namespace DeveloperStore.Infrastructure.Migrations
                     b.OwnsOne("DeveloperStore.Domain.ValueObjects.ProductInfo", "Product", b1 =>
                         {
                             b1.Property<Guid>("SaleItemId")
-                                .HasColumnType("uuid");
+                                .HasColumnType("TEXT");
 
                             b1.Property<string>("Category")
                                 .IsRequired()
                                 .HasMaxLength(100)
-                                .HasColumnType("character varying(100)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("ProductCategory");
 
                             b1.Property<string>("Name")
                                 .IsRequired()
                                 .HasMaxLength(200)
-                                .HasColumnType("character varying(200)")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("ProductName");
 
                             b1.Property<Guid>("ProductId")
-                                .HasColumnType("uuid")
+                                .HasColumnType("TEXT")
                                 .HasColumnName("ProductId");
 
                             b1.HasKey("SaleItemId");
@@ -271,7 +266,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                             b1.OwnsOne("DeveloperStore.Domain.ValueObjects.Money", "UnitPrice", b2 =>
                                 {
                                     b2.Property<Guid>("ProductInfoSaleItemId")
-                                        .HasColumnType("uuid");
+                                        .HasColumnType("TEXT");
 
                                     b2.Property<decimal>("Amount")
                                         .HasColumnType("decimal(18,2)")
@@ -281,7 +276,7 @@ namespace DeveloperStore.Infrastructure.Migrations
                                         .IsRequired()
                                         .ValueGeneratedOnAdd()
                                         .HasMaxLength(3)
-                                        .HasColumnType("character varying(3)")
+                                        .HasColumnType("TEXT")
                                         .HasDefaultValue("BRL")
                                         .HasColumnName("ProductUnitPriceCurrency");
 
