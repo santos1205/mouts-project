@@ -2,12 +2,15 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using DeveloperStore.Api.Controllers;
+using DeveloperStore.Application.Common.DTOs;
 using DeveloperStore.Application.Sales.Queries.GetAllSales;
 using DeveloperStore.Application.Sales.Queries.GetSaleById;
 using DeveloperStore.Domain.Entities;
+using DeveloperStore.Domain.Repositories;
 using DeveloperStore.Domain.ValueObjects;
 using DeveloperStore.Infrastructure.Persistence;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeveloperStore.Tests.Integration.Controllers;
@@ -34,14 +37,19 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
       CustomerEmail = "john@example.com",
       BranchId = Guid.NewGuid(),
       BranchName = "Main Branch",
+      BranchLocation = "Downtown", // Added missing required field
       Items = new List<CreateSaleItemRequest>
             {
                 new()
                 {
                     ProductId = Guid.NewGuid(),
                     ProductName = "Test Product",
+                    ProductCategory = "Electronics",
+                    ProductUnitPrice = 10.50m,
+                    ProductUnitPriceCurrency = "BRL",
                     Quantity = 2,
-                    UnitPrice = 10.50m
+                    UnitPrice = 10.50m,
+                    UnitPriceCurrency = "BRL"
                 }
             }
     };
@@ -54,18 +62,18 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
 
     var locationHeader = response.Headers.Location;
     locationHeader.Should().NotBeNull();
-    locationHeader!.ToString().Should().Contain("/api/sales/");
+    locationHeader!.ToString().ToLowerInvariant().Should().Contain("/api/sales/");
 
     var responseContent = await response.Content.ReadAsStringAsync();
-    var createdSale = JsonSerializer.Deserialize<GetSaleByIdResponse>(responseContent, new JsonSerializerOptions
+    var createdSale = JsonSerializer.Deserialize<SaleDto>(responseContent, new JsonSerializerOptions
     {
       PropertyNameCaseInsensitive = true
     });
 
     createdSale.Should().NotBeNull();
-    createdSale!.Customer.Name.Should().Be("John Doe");
+    createdSale!.CustomerName.Should().Be("John Doe");
     createdSale.Items.Should().HaveCount(1);
-    createdSale.TotalAmount.Amount.Should().Be(21.00m); // 2 * 10.50
+    createdSale.TotalAmount.Should().Be(21.00m); // 2 * 10.50
   }
 
   [Fact]
@@ -93,7 +101,7 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
   public async Task GetSale_WithExistingSaleId_ReturnsOkResult()
   {
     // Arrange
-    var saleId = await CreateTestSaleAsync();
+    var saleId = await CreateTestSaleViaApiAsync();
 
     // Act
     var response = await _client.GetAsync($"/api/sales/{saleId}");
@@ -129,8 +137,8 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
   public async Task GetAllSales_ReturnsOkResultWithSales()
   {
     // Arrange
-    await CreateTestSaleAsync();
-    await CreateTestSaleAsync();
+    await CreateTestSaleViaApiAsync();
+    await CreateTestSaleViaApiAsync();
 
     // Act
     var response = await _client.GetAsync("/api/sales");
@@ -152,7 +160,7 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
   public async Task CancelSale_WithExistingSaleId_ReturnsNoContent()
   {
     // Arrange
-    var saleId = await CreateTestSaleAsync();
+    var saleId = await CreateTestSaleViaApiAsync();
 
     // Act
     var response = await _client.DeleteAsync($"/api/sales/{saleId}");
@@ -182,10 +190,48 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
     responseContent.Should().Contain("Healthy");
   }
 
+  private async Task<Guid> CreateTestSaleViaApiAsync()
+  {
+    var request = new CreateSaleRequest
+    {
+      CustomerId = Guid.NewGuid(),
+      CustomerName = "Test Customer",
+      CustomerEmail = "test@example.com",
+      BranchId = Guid.NewGuid(),
+      BranchName = "Test Branch",
+      BranchLocation = "Downtown",
+      Items = new List<CreateSaleItemRequest>
+      {
+        new CreateSaleItemRequest
+        {
+          ProductId = Guid.NewGuid(),
+          ProductName = "Test Product",
+          ProductCategory = "Electronics",
+          ProductUnitPrice = 15.00m,
+          ProductUnitPriceCurrency = "BRL",
+          Quantity = 1,
+          UnitPrice = 15.00m,
+          UnitPriceCurrency = "BRL"
+        }
+      }
+    };
+
+    var response = await _client.PostAsJsonAsync("/api/sales", request);
+    response.EnsureSuccessStatusCode();
+
+    var responseContent = await response.Content.ReadAsStringAsync();
+    var createdSale = JsonSerializer.Deserialize<SaleDto>(responseContent, new JsonSerializerOptions
+    {
+      PropertyNameCaseInsensitive = true
+    });
+
+    return createdSale!.Id;
+  }
+
   private async Task<Guid> CreateTestSaleAsync()
   {
     using var scope = _factory.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<DeveloperStoreDbContext>();
+    var repository = scope.ServiceProvider.GetRequiredService<ISaleRepository>();
 
     var sale = Sale.Create(
         $"SALE-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}",
@@ -201,8 +247,7 @@ public class SalesControllerIntegrationTests : IClassFixture<DeveloperStoreWebAp
 
     sale.AddItem(productInfo, 1);
 
-    context.Sales.Add(sale);
-    await context.SaveChangesAsync();
+    await repository.AddAsync(sale);
 
     return sale.Id;
   }

@@ -2,6 +2,7 @@ using DeveloperStore.Infrastructure;
 using DeveloperStore.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -10,6 +11,8 @@ namespace DeveloperStore.Tests.Integration;
 
 public class DeveloperStoreWebApplicationFactory : WebApplicationFactory<Program>
 {
+  private SqliteConnection _connection = null!;
+
   protected override void ConfigureWebHost(IWebHostBuilder builder)
   {
     builder.ConfigureServices(services =>
@@ -37,11 +40,16 @@ public class DeveloperStoreWebApplicationFactory : WebApplicationFactory<Program
         services.Remove(descriptor);
       }
 
-      // Add InMemory database for testing
+      // Create and open SQLite in-memory connection to keep database alive
+      _connection = new SqliteConnection("DataSource=:memory:");
+      _connection.Open();
+
+      // Add SQLite database for testing (better owned entity support than InMemory)
       services.AddDbContext<DeveloperStoreDbContext>(options =>
           {
-          options.UseInMemoryDatabase("TestDatabase");
-        });
+            options.UseSqlite(_connection);
+            options.EnableSensitiveDataLogging();
+          });
 
       // Build the service provider and create the database
       var serviceProvider = services.BuildServiceProvider();
@@ -77,5 +85,14 @@ public class DeveloperStoreWebApplicationFactory : WebApplicationFactory<Program
 
     // Add test data will be handled by individual tests
     // This method can be used for common test data if needed
+  }
+
+  protected override void Dispose(bool disposing)
+  {
+    if (disposing)
+    {
+      _connection?.Dispose();
+    }
+    base.Dispose(disposing);
   }
 }
