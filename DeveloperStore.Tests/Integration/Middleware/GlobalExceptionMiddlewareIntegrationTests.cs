@@ -41,11 +41,11 @@ public class GlobalExceptionMiddlewareIntegrationTests : IClassFixture<Developer
     response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
     var responseContent = await response.Content.ReadAsStringAsync();
-    
+
     // Debug: Log what we actually received
     Console.WriteLine($"Response Content: '{responseContent}'");
     Console.WriteLine($"Content Type: {response.Content.Headers.ContentType}");
-    
+
     // For now, let's just check that we get a BadRequest response
     // The middleware might not be handling this specific type of error properly
     responseContent.Should().NotBeNullOrEmpty();

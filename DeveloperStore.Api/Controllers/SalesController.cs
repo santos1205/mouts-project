@@ -1,6 +1,6 @@
 using DeveloperStore.Application.Common.DTOs;
-using DeveloperStore.Application.Sales.Commands.CreateSale;
 using DeveloperStore.Application.Sales.Commands.CancelSale;
+using DeveloperStore.Application.Sales.Commands.CreateSale;
 using DeveloperStore.Application.Sales.Queries.GetAllSales;
 using DeveloperStore.Application.Sales.Queries.GetSaleById;
 using MediatR;
