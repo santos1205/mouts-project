@@ -6,14 +6,16 @@ using Microsoft.EntityFrameworkCore;
 namespace DeveloperStore.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// PostgreSQL implementation of ISaleRepository using Entity Framework Core.
-/// This class handles all data access operations for the Sale aggregate.
+/// Entity Framework implementation of ISaleRepository (DISABLED)
+/// This is kept for reference but should not be used
+/// Use the raw SQL SaleRepository instead
 /// </summary>
-public class SaleRepository : ISaleRepository
+[Obsolete("Use raw SQL SaleRepository instead")]
+public class EfSaleRepository : ISaleRepository
 {
   private readonly DeveloperStoreDbContext _context;
 
-  public SaleRepository(DeveloperStoreDbContext context)
+  public EfSaleRepository(DeveloperStoreDbContext context)
   {
     _context = context ?? throw new ArgumentNullException(nameof(context));
   }
