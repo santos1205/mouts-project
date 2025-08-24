@@ -393,6 +393,7 @@ test-commands-reference.md
 # SQLite database files
 *.db-shm
 *.db-wal
+DeveloperStore.Api/developerstore.db
 
 # SQLite database (keep main db file commented if you want to exclude it too)
 # *.db
