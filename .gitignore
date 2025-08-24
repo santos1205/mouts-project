@@ -388,3 +388,4 @@ FodyWeavers.xsd
 
 # Build documentation (project development log)
 build-documentation.md
+test-commands-reference.md
