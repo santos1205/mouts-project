@@ -1,7 +1,6 @@
 using DeveloperStore.Domain.Repositories;
 using DeveloperStore.Infrastructure.Persistence;
 using DeveloperStore.Infrastructure.Persistence.Repositories;
-using DeveloperStore.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
