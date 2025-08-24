@@ -244,27 +244,37 @@ public class Sale : Entity
     // Get the currency from the first item
     var currency = _items.First().UnitPrice.Currency;
 
-    // Business Rule: Discount based on total quantity
-    // < 4 items: 0% discount
-    // 4-9 items: 10% discount  
-    // 10-20 items: 20% discount
+    // Business Rule: Discount based on individual product quantities
+    // < 4 identical items: 0% discount per product
+    // 4-9 identical items: 10% discount per product
+    // 10-20 identical items: 20% discount per product
 
-    decimal discountPercentage = TotalQuantity switch
+    // Apply discount to each item individually based on its quantity
+    foreach (var item in _items)
     {
-      < 4 => 0m,
-      >= 4 and <= 9 => 10m,
-      >= 10 and <= 20 => 20m,
-      _ => 20m // Cap at 20% for more than 20 items
-    };
+      decimal discountPercentage = item.Quantity switch
+      {
+        < 4 => 0m,
+        >= 4 and <= 9 => 10m,
+        >= 10 and <= 20 => 20m,
+        _ => 20m // Cap at 20% for more than 20 items (though max is enforced at 20)
+      };
 
-    if (discountPercentage > 0)
-    {
-      var discountAmount = Subtotal.ApplyDiscount(discountPercentage);
-      SaleLevelDiscount = Subtotal - discountAmount;
+      if (discountPercentage > 0)
+      {
+        var itemTotal = item.UnitPrice * item.Quantity;
+        var discountAmount = itemTotal.ApplyDiscount(discountPercentage);
+        var itemDiscount = itemTotal - discountAmount;
+        item.ApplyDiscount(itemDiscount);
+      }
+      else
+      {
+        // No discount for this item
+        item.ApplyDiscount(Money.Zero(currency));
+      }
     }
-    else
-    {
-      SaleLevelDiscount = Money.Zero(currency);
-    }
+
+    // Sale-level discount is zero since discounts are applied at item level
+    SaleLevelDiscount = Money.Zero(currency);
   }
 }

@@ -63,12 +63,12 @@ public class SaleTests
     var product = SaleTestDataBuilder.ValidProductInfo();
     var unitPrice = Money.Of(10.00m, "USD");
 
-    // Act - Add 5 items (should trigger 10% discount tier)
+    // Act - Add 5 items (should trigger 10% discount on this product)
     sale.AddItem(product, 5, unitPrice);
 
     // Assert
-    sale.SaleLevelDiscount.Amount.Should().Be(5.00m); // 10% of 50.00
-    sale.TotalAmount.Amount.Should().Be(45.00m); // 50.00 - 5.00
+    sale.SaleLevelDiscount.Amount.Should().Be(0m); // Discounts are applied at item level
+    sale.TotalAmount.Amount.Should().Be(45.00m); // 50.00 - 5.00 (item discount)
   }
 
   [Fact]
@@ -81,12 +81,12 @@ public class SaleTests
     var product = SaleTestDataBuilder.ValidProductInfo();
     var unitPrice = Money.Of(10.00m, "USD");
 
-    // Act - Add 15 items (should trigger 20% discount tier)
+    // Act - Add 15 items (should trigger 20% discount on this product)
     sale.AddItem(product, 15, unitPrice);
 
     // Assert
-    sale.SaleLevelDiscount.Amount.Should().Be(30.00m); // 20% of 150.00
-    sale.TotalAmount.Amount.Should().Be(120.00m); // 150.00 - 30.00
+    sale.SaleLevelDiscount.Amount.Should().Be(0m); // Discounts are applied at item level
+    sale.TotalAmount.Amount.Should().Be(120.00m); // 150.00 - 30.00 (item discount)
   }
 
   [Fact]
@@ -118,14 +118,14 @@ public class SaleTests
     var unitPrice2 = Money.Of(25.00m, "USD");
 
     // Act
-    sale.AddItem(product1, 2, unitPrice1); // 2 * 15.00 = 30.00
-    sale.AddItem(product2, 3, unitPrice2); // 3 * 25.00 = 75.00
+    sale.AddItem(product1, 2, unitPrice1); // 2 * 15.00 = 30.00 (no discount - less than 4)
+    sale.AddItem(product2, 3, unitPrice2); // 3 * 25.00 = 75.00 (no discount - less than 4)
 
     // Assert
     sale.Items.Should().HaveCount(2);
-    sale.TotalQuantity.Should().Be(5); // 2 + 3, triggers 10% discount
-    sale.SaleLevelDiscount.Amount.Should().Be(10.50m); // 10% of 105.00
-    sale.TotalAmount.Amount.Should().Be(94.50m); // 105.00 - 10.50
+    sale.TotalQuantity.Should().Be(5); // 2 + 3
+    sale.SaleLevelDiscount.Amount.Should().Be(0m); // No discount - per-product quantities are less than 4
+    sale.TotalAmount.Amount.Should().Be(105.00m); // 30.00 + 75.00
   }
 
   [Fact]
