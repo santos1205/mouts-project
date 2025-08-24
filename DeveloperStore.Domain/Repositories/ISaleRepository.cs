@@ -28,4 +28,7 @@ public interface ISaleRepository
   // Existence checks
   Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
   Task<bool> SaleNumberExistsAsync(string saleNumber, CancellationToken cancellationToken = default);
+
+  // Special queries for application services
+  Task<IReadOnlyList<object>> GetAllSalesWithCalculatedTotalsAsync(CancellationToken cancellationToken = default);
 }

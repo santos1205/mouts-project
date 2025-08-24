@@ -103,4 +103,57 @@ public class EfSaleRepository : ISaleRepository
   {
     return await _context.Sales.AnyAsync(s => s.SaleNumber == saleNumber, cancellationToken);
   }
+
+  /// <summary>
+  /// Get all sales with calculated totals for GetAllSales response.
+  /// This method ensures correct money calculations are performed at the database level.
+  /// </summary>
+  public async Task<IReadOnlyList<object>> GetAllSalesWithCalculatedTotalsAsync(CancellationToken cancellationToken = default)
+  {
+    var salesWithCalculations = await _context.Sales
+      .Include(s => s.Items)
+      .OrderByDescending(s => s.CreatedAt)
+      .Select(s => new
+      {
+        Id = s.Id,
+        SaleNumber = s.SaleNumber,
+        SaleDate = s.SaleDate,
+        Customer = new
+        {
+          Id = s.Customer.CustomerId,
+          Name = s.Customer.Name,
+          Email = s.Customer.Email
+        },
+        Branch = new
+        {
+          Id = s.Branch.BranchId,
+          Name = s.Branch.Name,
+          Location = s.Branch.Location
+        },
+        // Calculated totals using the same logic as in Program.cs
+        TotalQuantity = s.Items.Sum(i => i.Quantity),
+        Subtotal = new
+        {
+          Amount = s.Items.Sum(i => i.UnitPrice.Amount * i.Quantity),
+          Currency = s.Items.FirstOrDefault() != null ? s.Items.First().UnitPrice.Currency : "USD"
+        },
+        TotalDiscount = new
+        {
+          Amount = s.Items.Sum(i => i.Discount.Amount) + s.SaleLevelDiscount.Amount,
+          Currency = s.SaleLevelDiscount.Currency
+        },
+        TotalAmount = new
+        {
+          Amount = s.Items.Sum(i => (i.UnitPrice.Amount * i.Quantity) - i.Discount.Amount) - s.SaleLevelDiscount.Amount,
+          Currency = s.SaleLevelDiscount.Currency
+        },
+        IsCancelled = s.IsCancelled,
+        CancellationReason = s.CancellationReason,
+        ItemCount = s.Items.Count(),
+        CreatedAt = s.CreatedAt
+      })
+      .ToListAsync(cancellationToken);
+
+    return salesWithCalculations.Cast<object>().ToList().AsReadOnly();
+  }
 }

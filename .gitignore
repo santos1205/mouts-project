@@ -397,3 +397,6 @@ DeveloperStore.Api/developerstore.db
 
 # SQLite database (keep main db file commented if you want to exclude it too)
 # *.db
+
+# DatabaseChecker folder (utility project for database analysis)
+DatabaseChecker/
