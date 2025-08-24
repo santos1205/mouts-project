@@ -7,7 +7,7 @@ public record GetSaleByIdResponse
   public DateTime SaleDate { get; init; }
   public CustomerDto Customer { get; init; } = null!;
   public BranchDto Branch { get; init; } = null!;
-  public List<SaleItemDto> Items { get; init; } = new();
+  public List<GetSaleByIdSaleItemDto> Items { get; init; } = new();
   public int TotalQuantity { get; init; }
   public MoneyDto Subtotal { get; init; } = null!;
   public MoneyDto SaleLevelDiscount { get; init; } = null!;
@@ -40,7 +40,7 @@ public record ProductDto
   public MoneyDto UnitPrice { get; init; } = null!;
 }
 
-public record SaleItemDto
+public record GetSaleByIdSaleItemDto
 {
   public Guid Id { get; init; }
   public ProductDto Product { get; init; } = null!;
