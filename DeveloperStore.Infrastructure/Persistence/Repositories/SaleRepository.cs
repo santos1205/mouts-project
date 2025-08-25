@@ -136,48 +136,52 @@ public class SaleRepository : ISaleRepository
   /// </summary>
   public async Task<IReadOnlyList<object>> GetAllSalesWithCalculatedTotalsAsync(CancellationToken cancellationToken = default)
   {
-    var salesWithCalculations = await _context.Sales
+    // First, get all sales with their items to ensure proper loading
+    var sales = await _context.Sales
+      .Include(s => s.Items)
       .OrderByDescending(s => s.CreatedAt)
-      .Select(s => new
-      {
-        Id = s.Id,
-        SaleNumber = s.SaleNumber,
-        SaleDate = s.SaleDate,
-        Customer = new
-        {
-          Id = s.Customer.CustomerId,
-          Name = s.Customer.Name,
-          Email = s.Customer.Email
-        },
-        Branch = new
-        {
-          Id = s.Branch.BranchId,
-          Name = s.Branch.Name,
-          Location = s.Branch.Location
-        },
-        // Calculated totals using the same logic as in Program.cs
-        TotalQuantity = s.Items.Sum(i => i.Quantity),
-        Subtotal = new
-        {
-          Amount = s.Items.Sum(i => i.UnitPrice.Amount * i.Quantity),
-          Currency = s.Items.FirstOrDefault() != null ? s.Items.First().UnitPrice.Currency : "USD"
-        },
-        TotalDiscount = new
-        {
-          Amount = s.Items.Sum(i => i.Discount.Amount) + s.SaleLevelDiscount.Amount,
-          Currency = s.SaleLevelDiscount.Currency
-        },
-        TotalAmount = new
-        {
-          Amount = s.Items.Sum(i => (i.UnitPrice.Amount * i.Quantity) - i.Discount.Amount) - s.SaleLevelDiscount.Amount,
-          Currency = s.SaleLevelDiscount.Currency
-        },
-        IsCancelled = s.IsCancelled,
-        CancellationReason = s.CancellationReason,
-        ItemCount = s.Items.Count(),
-        CreatedAt = s.CreatedAt
-      })
       .ToListAsync(cancellationToken);
+
+    // Then project to anonymous objects with calculated totals
+    var salesWithCalculations = sales.Select(s => new
+    {
+      Id = s.Id,
+      SaleNumber = s.SaleNumber,
+      SaleDate = s.SaleDate,
+      Customer = new
+      {
+        Id = s.Customer.CustomerId,
+        Name = s.Customer.Name,
+        Email = s.Customer.Email
+      },
+      Branch = new
+      {
+        Id = s.Branch.BranchId,
+        Name = s.Branch.Name,
+        Location = s.Branch.Location
+      },
+      // Calculated totals using the same logic as domain entity
+      TotalQuantity = s.Items.Sum(i => i.Quantity),
+      Subtotal = new
+      {
+        Amount = s.Items.Sum(i => i.UnitPrice.Amount * i.Quantity),
+        Currency = s.Items.FirstOrDefault()?.UnitPrice.Currency ?? "USD"
+      },
+      TotalDiscount = new
+      {
+        Amount = s.Items.Sum(i => i.Discount.Amount) + s.SaleLevelDiscount.Amount,
+        Currency = s.SaleLevelDiscount.Currency
+      },
+      TotalAmount = new
+      {
+        Amount = s.Items.Sum(i => (i.UnitPrice.Amount * i.Quantity) - i.Discount.Amount) - s.SaleLevelDiscount.Amount,
+        Currency = s.SaleLevelDiscount.Currency
+      },
+      IsCancelled = s.IsCancelled,
+      CancellationReason = s.CancellationReason,
+      ItemCount = s.Items.Count,
+      CreatedAt = s.CreatedAt
+    }).ToList();
 
     return salesWithCalculations.Cast<object>().ToList().AsReadOnly();
   }
