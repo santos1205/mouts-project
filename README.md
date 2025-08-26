@@ -27,6 +27,232 @@ Após configuração:
 
 ---
 
+## 🚀 Guia de Setup para Novos Desenvolvedores
+
+### Pré-requisitos
+- **.NET 8 SDK** (versão 8.0.413 ou superior)
+  ```bash
+  # Verificar versão instalada
+  dotnet --version
+  ```
+- **Git** para clone do repositório
+- **Visual Studio Code** ou **Visual Studio 2022** (recomendado)
+
+### 📋 Setup Passo a Passo (Primeira Vez)
+
+#### 1️⃣ Clone e Navegação
+```bash
+# Clonar o repositório
+git clone https://github.com/santos1205/mouts-project.git
+cd mouts-project
+
+# Verificar a estrutura do projeto
+ls -la
+```
+
+#### 2️⃣ Restaurar Dependências
+```bash
+# Restaurar pacotes NuGet para toda a solução
+dotnet restore
+
+# Verificar se todos os projetos foram restaurados
+dotnet build
+```
+
+#### 3️⃣ Configurar Banco de Dados (SQLite)
+```bash
+# Instalar Entity Framework Tools (se não estiver instalado)
+dotnet tool install --global dotnet-ef
+
+# Verificar se as ferramentas estão instaladas
+dotnet ef --version
+
+# Aplicar migrações (cria o banco SQLite automaticamente)
+dotnet ef database update --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+```
+
+#### 4️⃣ Executar Testes (Validar Setup)
+```bash
+# Executar todos os testes
+dotnet test
+
+# Resultado esperado: ✅ 25+ testes passando
+```
+
+#### 5️⃣ Iniciar a API
+```bash
+# Executar a API em modo desenvolvimento
+dotnet run --project DeveloperStore.Api
+
+# OU usar watch para hot reload
+dotnet watch run --project DeveloperStore.Api
+```
+
+#### 6️⃣ Validar Funcionamento
+1. **Swagger UI**: Acesse `http://localhost:5079/swagger`
+2. **Teste GET**: `http://localhost:5079/api/sales`
+3. **Health Check**: `http://localhost:5079/api/sales` deve retornar `[]` (array vazio)
+
+### 🔧 Comandos de Desenvolvimento Úteis
+
+#### Comandos de Build
+```bash
+# Build completo da solução
+dotnet build
+
+# Build em modo Release
+dotnet build --configuration Release
+
+# Limpar artefatos de build
+dotnet clean
+```
+
+#### Comandos de Teste
+```bash
+# Executar todos os testes
+dotnet test
+
+# Executar testes com cobertura
+dotnet test --collect:"XPlat Code Coverage"
+
+# Executar testes de uma categoria específica
+dotnet test --filter "Category=Unit"
+```
+
+#### Comandos de Banco de Dados
+```bash
+# Ver status das migrações
+dotnet ef migrations list --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+
+# Criar nova migração (se necessário)
+dotnet ef migrations add NomeDaMigracao --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+
+# Reverter banco para migração anterior
+dotnet ef database update MigracaoAnterior --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+```
+
+### 🗂️ Estrutura do Workspace no VS Code
+
+Se estiver usando VS Code, as configurações já estão incluídas:
+
+```
+.vscode/
+├── launch.json      # Configurações de debug
+├── tasks.json       # Tasks de build/test
+└── settings.json    # Configurações do projeto
+```
+
+**Como usar:**
+1. Abrir pasta no VS Code: `code .`
+2. Pressionar `F5` para debug da API
+3. `Ctrl+Shift+P` → "Tasks: Run Task" para executar builds
+
+### 🚨 Possíveis Problemas e Soluções
+
+#### ❌ "dotnet ef command not found"
+```bash
+# Solução: Instalar EF Core Tools globalmente
+dotnet tool install --global dotnet-ef
+```
+
+#### ❌ "SDK version not found"
+```bash
+# Verificar versão necessária no global.json
+cat global.json
+
+# Instalar .NET 8 SDK se necessário
+# Baixar de: https://dotnet.microsoft.com/download/dotnet/8.0
+```
+
+#### ❌ "Port 5079 already in use"
+```bash
+# Solução 1: Parar outros processos na porta
+lsof -ti:5079 | xargs kill -9  # macOS/Linux
+netstat -ano | findstr :5079   # Windows
+
+# Solução 2: Usar porta diferente
+dotnet run --project DeveloperStore.Api --urls="http://localhost:5080"
+```
+
+#### ❌ "Database update failed"
+```bash
+# Solução: Deletar banco e recriar
+rm DeveloperStore.Api/developerstore.db
+dotnet ef database update --project DeveloperStore.Infrastructure --startup-project DeveloperStore.Api
+```
+
+### 🧪 Testando a API (Exemplos Rápidos)
+
+#### Criar uma Venda de Teste (via Swagger)
+1. Acesse `http://localhost:5079/swagger`
+2. POST `/api/sales` com o JSON de exemplo:
+```json
+{
+  "customerId": "11111111-1111-1111-1111-111111111111",
+  "customerName": "João Silva",
+  "customerEmail": "joao.silva@email.com",
+  "branchId": "22222222-2222-2222-2222-222222222222",
+  "branchName": "Filial Centro",
+  "branchLocation": "São Paulo - SP",
+  "items": [
+    {
+      "productId": "33333333-3333-3333-3333-333333333333",
+      "productName": "Notebook Dell",
+      "productCategory": "Computers",
+      "productUnitPrice": 2500.00,
+      "productUnitPriceCurrency": "BRL",
+      "quantity": 5,
+      "unitPrice": 2500.00,
+      "unitPriceCurrency": "BRL"
+    }
+  ]
+}
+```
+
+#### Comandos cURL para Teste Rápido
+```bash
+# Listar todas as vendas
+curl -X GET "http://localhost:5079/api/sales" -H "accept: application/json"
+
+# Obter venda por ID (substitua o ID)
+curl -X GET "http://localhost:5079/api/sales/{id}" -H "accept: application/json"
+```
+
+### 📝 Estrutura de Arquivos Importantes
+
+```
+mouts-project/
+├── DeveloperStore.Api/
+│   ├── developerstore.db          # Banco SQLite (criado automaticamente)
+│   ├── Program.cs                 # Entry point da aplicação
+│   └── Controllers/SalesController.cs
+├── DeveloperStore.Domain/         # Regras de negócio
+├── DeveloperStore.Application/    # Casos de uso (CQRS)
+├── DeveloperStore.Infrastructure/ # Acesso a dados
+├── DeveloperStore.Tests/          # Testes automatizados
+└── README.md                      # Este arquivo
+```
+
+### ✅ Checklist de Validação
+
+Após completar o setup, verifique:
+
+- [ ] `dotnet --version` mostra 8.0.413 ou superior
+- [ ] `dotnet build` compila sem erros
+- [ ] `dotnet test` executa 25+ testes com sucesso
+- [ ] API responde em `http://localhost:5079/swagger`
+- [ ] Arquivo `developerstore.db` foi criado em `DeveloperStore.Api/`
+- [ ] GET `/api/sales` retorna array (vazio ou com dados)
+
+### 🎯 Próximos Passos Após Setup
+
+1. **Explorar a API**: Use Swagger para testar todos os endpoints
+2. **Estudar o Código**: Comece pela camada Domain → Application → Infrastructure
+3. **Executar Testes**: Entenda as regras de negócio através dos testes
+4. **Fazer Mudanças**: Use `dotnet watch` para desenvolvimento com hot reload
+
+---
+
 ## Índice
 - [Visão Geral](#visão-geral)
 - [Arquitetura](#arquitetura)
